@@ -21,6 +21,15 @@
 // All the webots classes are defined in the "webots" namespace
 using namespace webots;
 
+class Gripper{
+  public:
+    Gripper(Motor *fingers){
+      this.fingers = fingers;
+    }
+  private:
+    Motor *fingers[2];
+};
+
 float gear_velocities[8] = {-1,-0.5,0,0.3,0.5,0.7,1,1.2};
 
  double max(double a,double b){
