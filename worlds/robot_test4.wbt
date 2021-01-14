@@ -8,8 +8,8 @@ WorldInfo {
   coordinateSystem "NUE"
 }
 Viewpoint {
-  orientation 0.11039832215797808 -0.9188750996929501 -0.37878854474359996 3.007784436075967
-  position -0.04497755522357442 1.6776669849214378 1.017924298484065
+  orientation 0.11039857410902312 -0.9188712467477183 -0.3787978177537307 3.007787008145418
+  position -0.04497603752419946 1.6776894698177796 1.0179581833665092
   follow "eod_robot:solid"
   followType "Mounted Shot"
 }
@@ -17,12 +17,12 @@ DirectionalLight {
   direction 0 0 0
 }
 Robot {
-  translation 0.17226920676479476 0.10567331144450408 2.1425426831458476
-  rotation 0.000323184116311671 -0.9999998756329751 0.00037985005119113075 -1.5587239431797195
+  translation 0.17226932510069362 0.10567285237185294 2.1425452048143736
+  rotation 0.00031063212315197194 -0.9999998838351003 0.00036856135165009825 -1.5587239347858135
   children [
     HingeJoint {
       jointParameters HingeJointParameters {
-        position 354.466689621751
+        position 354.46668963489327
         axis 0 1 0
         anchor 0 0.05 0
       }
@@ -32,11 +32,12 @@ Robot {
         }
       ]
       endPoint Solid {
-        translation 7.6200194474231605e-06 0.04954965226473412 -1.8969596398111087e-05
-        rotation 9.397436550241181e-08 0.9999999999999918 8.695164885587658e-08 3.2632356072174438
+        translation 7.620019198119882e-06 0.04954965226473412 -1.8969596498255325e-05
+        rotation 9.397436611138692e-08 0.9999999999999919 8.695164827315356e-08 3.263235620359699
         children [
           HingeJoint {
             jointParameters HingeJointParameters {
+              position -2.6791620477695233e-08
               axis 0 0 1
               anchor 0 0.07 0
               minStop -1.4
@@ -50,8 +51,8 @@ Robot {
               }
             ]
             endPoint Solid {
-              translation 0.003206450395931499 0.04989344820219077 -8.34465024857067e-10
-              rotation 9.283789887570627e-11 2.3429280561117992e-11 -1 0.17757797244168033
+              translation 0.0032064498572443928 0.04989344811628478 -8.344650248570669e-10
+              rotation 9.283788521970948e-11 2.3429275791941124e-11 -1 0.17757799923330164
               scale 1.5 1.5 1.5
               children [
                 Transform {
@@ -174,6 +175,9 @@ Robot {
                                   jointParameters JointParameters {
                                   }
                                   device [
+                                    PositionSensor {
+                                      name "grf_sensor"
+                                    }
                                     LinearMotor {
                                       name "right_finger"
                                       minPosition -0.001
@@ -193,7 +197,12 @@ Robot {
                                   }
                                 }
                                 DEF FINGER SliderJoint {
+                                  jointParameters JointParameters {
+                                  }
                                   device [
+                                    PositionSensor {
+                                      name "glf_sensor"
+                                    }
                                     LinearMotor {
                                       name "left_finger"
                                       minPosition -0.1
@@ -1195,6 +1204,8 @@ Robot {
   }
   controller "eod_controller"
   cpuConsumption 0
+  linearVelocity -5.0307750817556165e-12 4.7434589719633205e-14 7.994730750848015e-13
+  angularVelocity 7.588410534334779e-12 -3.336473995390824e-13 4.761817035013338e-11
 }
 TexturedBackgroundLight {
 }

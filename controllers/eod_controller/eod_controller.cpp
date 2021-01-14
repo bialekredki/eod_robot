@@ -10,6 +10,7 @@
 #include <webots/Robot.hpp>
 #include <webots/Motor.hpp>
 #include <webots/Keyboard.hpp>
+#include <webots/PositionSensor.hpp>
 #include <iostream>
 #include <cstdint>
 
@@ -23,11 +24,39 @@ using namespace webots;
 
 class Gripper{
   public:
-    Gripper(Motor *fingers){
-      this.fingers = fingers;
+    Gripper(Motor **fingers){ // right finger to be given as the first one
+      this->fingers = fingers;
     }
+    void set_velocities(){
+      for(int i = 0; i < 2; i++){
+        fingers[i]->setVelocity(0.1);
+      }
+    }
+    bool is_open(){}
+    bool is_closed(){}
+    void close(){
+      fingers[0]->setPosition(fingers[0]->getMaxPosition());
+      fingers[1]->setPosition(fingers[1]->getMinPosition());
+     this->set_velocities();
+    }
+
+    void open(){
+       fingers[0]->setPosition(fingers[0]->getMinPosition());
+       fingers[1]->setPosition(fingers[1]->getMaxPosition());
+       this->set_velocities();
+    }
+    void release(){}
+    void tighten(){
+      double right_finger_pos = fingers[0]->getPositionSensor()->getValue();
+      double left_finger_pos = fingers[1]->getPositionSensor()->getValue();
+      std::cout << right_finger_pos << std::endl << left_finger_pos<<std::endl;
+      fingers[0]->setPosition(right_finger_pos+0.01);
+      fingers[1]->setPosition(left_finger_pos-0.01);
+      this->set_velocities();
+    }
+
   private:
-    Motor *fingers[2];
+    Motor **fingers;
 };
 
 float gear_velocities[8] = {-1,-0.5,0,0.3,0.5,0.7,1,1.2};
@@ -67,13 +96,13 @@ float gear_velocities[8] = {-1,-0.5,0,0.3,0.5,0.7,1,1.2};
  int set_arm1_velocity(unsigned int turn){
    if(turn == 0) return 0;
    else if(turn == 1) return 2;
-   else if(turn == 2) return -2;
+   return -2;
  }
  
  int set_joint1_velocity(unsigned int turn){
    if(turn == 0) return 0;
    else if(turn == 1) return 2;
-   else if(turn == 2) return -2;
+   return -2;
  }
   
 
@@ -88,12 +117,16 @@ int main(int argc, char **argv) {
   // CREATE INSTANCES OF WEBOTS NODES/OBJECTS
   Keyboard kb;
   Robot *robot = new Robot();
+  int timeStep = (int)robot->getBasicTimeStep();
   Motor *wheels[2];
+  Motor *fingers[2];
   Motor *arm1;
   Motor *joint1;
   Motor *joint2;
   Motor *joint3;
   
+  
+  char finger_names[2][16] = {"right_finger","left_finger"};
   char wheels_names[2][8] = {"right","left"}; // "left/0"
   double velocity_left = 0.0;
   double velocity_right = 0.0;
@@ -113,13 +146,26 @@ int main(int argc, char **argv) {
   double joint2_time_start = 0;
   double joint3_time_start = 0;
   int gear = 0;
-  
+    
+
   
   for(int i = 0 ; i < 2 ; i++){
     wheels[i] = robot->getMotor(wheels_names[i]);
     wheels[i]->setPosition(INFINITY);
     wheels[i]->setVelocity(0.0);
   }
+  
+  for(int i = 0; i < 2; i++){
+    fingers[i] = robot->getMotor(finger_names[i]);
+    fingers[i]->setPosition(INFINITY);
+    fingers[i]->setVelocity(0.0);
+    fingers[i]->getPositionSensor()->enable(timeStep);
+    std::cout << fingers[i]->getPositionSensor();
+    std::cout << robot->getPositionSensor("glf_sensor");
+  }
+  
+  Gripper grip(fingers);
+  std::cout << "XD";
   
   arm1 = robot->getMotor("arm1");
   arm1->setPosition(INFINITY);
@@ -138,7 +184,7 @@ int main(int argc, char **argv) {
   joint3->setVelocity(0.0);
   
   // get the time step of the current world.
-  int timeStep = (int)robot->getBasicTimeStep();
+
   kb.enable(timeStep);
   // You should insert a getDevice-like function in order to get the
   // instance of a device of the robot. Something like:
@@ -226,6 +272,17 @@ int main(int argc, char **argv) {
       joint3_turn = 1;
       joint3_time_start = robot->getTime();
       }
+    else if(key == 'G'){
+       grip.close();
+     }
+     else if(key == 'O'){
+       grip.open();
+     }
+     else if(key == 'T'){
+       grip.tighten();
+     }
+
+
       
     // Enter here functions to send actuator commands, like:
     //  motor->setPosition(10.0);
