@@ -13,8 +13,6 @@
 #include <webots/PositionSensor.hpp>
 #include <iostream>
 #include <cstdint>
-#include <cstdio>
-#include <math.h>
 
 #define MAX_VELOCITY 5
 #define MIN_VELOCITY -5
@@ -23,11 +21,10 @@
 
 // All the webots classes are defined in the "webots" namespace
 using namespace webots;
-double gear_velocities[8] = {-1,-0.5,0,0.3,0.5,0.7,1,1.2};
 // GRIPPER CLASS
 class Gripper{
   public:
-    Gripper(Motor **fingers){ // right finger first
+    Gripper(Motor **fingers){ // right finger to be given as the first one
       this->fingers = fingers;
     }
     
@@ -70,7 +67,7 @@ class Gripper{
 //ENGINE CLASS
 class Engine{
   public:
-  enum Side {RIGHT,LEFT,NONE};
+  enum Side {right,left,none};
   
     Engine(Motor **tracks){ // right track first
       this->tracks = tracks;
@@ -78,33 +75,17 @@ class Engine{
     }
     
     void stop(){
-      gear = 0;
-      rotation = NONE;
+      this->gear = 0;
     }
     
     void rotate(Side side){
       this->rotation = side;
-      int multiplicator = 0;
-      double left_track = tracks[1]->getPositionSensor()->getValue();
-      double right_track = tracks[0]->getPositionSensor()->getValue();
-      if(gear < 0){
-        rotation = NONE;
-  
-        return;
+      if(this->rotation == none) return;
+      else if(this->rotation == right){
+        this->left_track_goal = 
       }
-      else if(rotation == RIGHT)
-        multiplicator = 1;
-      else
-        multiplicator = -1;
-      tracks[1]->setPosition(left_track-0.05*gear*multiplicator);
-      tracks[0]->setPosition(right_track+0.05*gear*multiplicator);
     }
-    void change_gear(bool up){
-      if(up && this->gear < 5) 
-        gear++;
-      else if(!up && this->gear > -2) 
-        gear--;
-    }
+    void change_gear(bool up){}
     void turn(Side side){}
     int get_gear(){}
     void set_gear(){}
@@ -118,49 +99,18 @@ class Engine{
     }
     
     void run(){
-      if(tracks[0]->getPositionSensor()->getValue()+0.01 >= tracks[0]->getTargetPosition() && rotation == RIGHT)
-        rotation = NONE;
-      if (rotation == NONE || gear < 0){
-        tracks[1]->setPosition(INFINITY);
-        tracks[0]->setPosition(INFINITY);
-      }
-      
-      tracks[0]->setVelocity(gear_velocities[gear+2]);
-      tracks[1]->setVelocity(gear_velocities[gear+2]);
-      
+      if 
     }
   private:
   Motor **tracks;
   int gear = 0;
-  Side rotation = NONE;
-  Side turn_side = NONE;
+  Side rotation = none;
+  Side turn = none;
+  double left_track_goal = 0.0;
+  double right_track_goal = 0.0;
 };
 
-class Arm{
-  public:
-    Arm(Motor **joints){
-      this->joints = joints;
-    }
-    void reset(){
-    
-    }
-    void set_endeffector_position(){
-    
-    }
-    void rotate(){
-      
-    }
-    
-    void move_y_axis(){
-    
-    }
-    void move_x_axis(){
-    
-    }
-  private:
-    Motor **joints;
-
-};
+double gear_velocities[8] = {-1,-0.5,0,0.3,0.5,0.7,1,1.2};
 
  double max(double a,double b){
    if(a > b) return a;
@@ -171,16 +121,39 @@ class Arm{
    if(a < b) return a;
    return b;
  }
-
+ //depracted
+ int equalise(double velocity){
+   if(velocity > MAX_VELOCITY) return MAX_VELOCITY;
+   else if(velocity < MIN_VELOCITY) return MIN_VELOCITY;
+   else return (int)velocity;
+ }
  
- void init_device(Robot* robot,Motor** array, bool sensors, int size,std::string *names){
-   for (int i = 0; i < size; i++){
-     array[i] = robot->getMotor(names[i]);
-     array[i]->setPosition(INFINITY);
-     array[i]->setVelocity(0.0);
-     if(sensors)
-       array[i]->getPositionSensor()->enable(int(robot->getBasicTimeStep()/4));
-   }
+ void set_angular_velocities(int gear,unsigned int turn,double& velocity_right, double& velocity_left){
+   int index = gear+2;
+    if(turn == 1){
+      velocity_left = gear_velocities[index];
+      velocity_right = gear_velocities[index]/2;  
+    }
+    else if(turn == 2){
+      velocity_right = gear_velocities[index];
+      velocity_left = gear_velocities[index]/2;  
+    }
+    else{
+      velocity_right = gear_velocities[index];
+      velocity_left = gear_velocities[index];  
+    }
+ }
+ 
+ int set_arm1_velocity(unsigned int turn){
+   if(turn == 0) return 0;
+   else if(turn == 1) return 2;
+   return -2;
+ }
+ 
+ int set_joint1_velocity(unsigned int turn){
+   if(turn == 0) return 0;
+   else if(turn == 1) return 2;
+   return -2;
  }
   
 
@@ -198,12 +171,14 @@ int main(int argc, char **argv) {
   int timeStep = (int)robot->getBasicTimeStep();
   Motor *wheels[2];
   Motor *fingers[2];
-  Motor *joints[4];
+  Motor *arm1;
+  Motor *joint1;
+  Motor *joint2;
+  Motor *joint3;
   
   
-  std::string fingers_names[2] = {"right_finger","left_finger"};
-  std::string wheels_names[2] = {"right","left"}; // "left/0"
-  std::string joints_names[4] = {"base","joint1","joint2","joint3"};
+  char finger_names[2][16] = {"right_finger","left_finger"};
+  char wheels_names[2][8] = {"right","left"}; // "left/0"
   double velocity_left = 0.0;
   double velocity_right = 0.0;
   double velocity_arm1 = 0.0;
@@ -224,14 +199,43 @@ int main(int argc, char **argv) {
   int gear = 0;
     
 
-  init_device(robot,wheels,true,2,wheels_names);
-  init_device(robot,fingers,true,2,fingers_names);
-  init_device(robot,joints,false,4,joints_names);
+  
+  for(int i = 0 ; i < 2 ; i++){
+    wheels[i] = robot->getMotor(wheels_names[i]);
+    wheels[i]->setPosition(INFINITY);
+    wheels[i]->setVelocity(0.0);
+  }
+  
+  for(int i = 0; i < 2; i++){
+    fingers[i] = robot->getMotor(finger_names[i]);
+    fingers[i]->setPosition(INFINITY);
+    fingers[i]->setVelocity(0.0);
+    fingers[i]->getPositionSensor()->enable(timeStep);
+    std::cout << fingers[i]->getPositionSensor();
+    std::cout << robot->getPositionSensor("glf_sensor");
+  }
   
   Gripper grip(fingers);
-  Engine engine(wheels);
   std::cout << "XD";
-    
+  
+  arm1 = robot->getMotor("arm1");
+  arm1->setPosition(INFINITY);
+  arm1->setVelocity(0.0);
+  
+  joint1 = robot->getMotor("joint1");
+  joint1->setPosition(INFINITY);
+  joint1->setVelocity(0.0);
+  
+  joint2 = robot->getMotor("joint2");
+  joint2->setPosition(INFINITY);
+  joint2->setVelocity(0.0);
+  
+  joint3 = robot->getMotor("joint3");
+  joint3->setPosition(INFINITY);
+  joint3->setVelocity(0.0);
+  
+  robot->getPositionSensor("position sensor")->enable(timeStep);
+  
   // get the time step of the current world.
 
   kb.enable(timeStep);
@@ -265,25 +269,22 @@ int main(int argc, char **argv) {
       gear++;
       if(gear > MAX_GEAR)
         gear = MAX_GEAR;
-      std::cout << "XD" << std::endl;
-      engine.change_gear(true);
     }
     else if(key == kb.RIGHT){
-      engine.rotate(engine.RIGHT);
+      turn = 1;
       turn_time_start = robot->getTime();
     }
     else if(key == kb.LEFT){
-      engine.rotate(engine.LEFT);
+      turn = 2;
       turn_time_start = robot->getTime();
     }
     else if(key == kb.DOWN){
        gear--;
        if(gear < MIN_GEAR)
           gear = MIN_GEAR;
-       engine.change_gear(false);
     }
     else if(key == 'P'){ // press s to stop
-      engine.stop();
+      gear = 0;
     }
     
     else if(key == 'E'){
@@ -338,15 +339,28 @@ int main(int argc, char **argv) {
       
     // Enter here functions to send actuator commands, like:
     //  motor->setPosition(10.0);
-    engine.run();
     
+    set_angular_velocities(gear,turn,velocity_right,velocity_left);
+    velocity_arm1 = set_arm1_velocity(arm1_turn);
+    arm1->setVelocity(velocity_arm1);
+    velocity_joint1 = set_joint1_velocity(joint1_turn);
+    velocity_joint2 = set_joint1_velocity(joint2_turn);
+    velocity_joint3 = set_joint1_velocity(joint3_turn);
+    joint1->setVelocity(velocity_joint1);
+    joint2->setVelocity(velocity_joint2);
+    joint3->setVelocity(velocity_joint3);
+    wheels[0]->setVelocity(velocity_left);
+    wheels[1]->setVelocity(velocity_right);
+    std::cout << robot->getPositionSensor("position sensor")->getValue() << std::endl;
   };
 
   // Enter here exit cleanup code.
 
   delete robot;
-  delete[] joints;
+  delete arm1;
+  delete joint1;
+  delete joint2;
+  delete joint3;
   delete[] wheels;
-  delete[] fingers;
   return 0;
 }

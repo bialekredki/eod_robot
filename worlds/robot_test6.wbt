@@ -8,8 +8,8 @@ WorldInfo {
   coordinateSystem "NUE"
 }
 Viewpoint {
-  orientation -0.3467409834185885 0.9326776197616724 0.09941402322414682 1.6303846640665625
-  position 2.046396120783173 1.54396474210193 2.122416424011101
+  orientation -0.8087065825885097 -0.3227575603694648 -0.49175321097311125 1.520021170308105
+  position 0.48143990760893873 4.987547801738396 3.1374029006022024
   follow "eod_robot:solid"
   followType "Mounted Shot"
 }
@@ -17,12 +17,12 @@ DirectionalLight {
   direction 0 0 0
 }
 Robot {
-  translation 0.17142843275310357 0.105661127560264 2.1409758609596863
-  rotation 0.00034652222855764816 -0.9999998589842651 0.00040243483326322076 -1.5537701265262571
+  translation 0.17142879152889107 0.10567277496510015 2.1409834756652213
+  rotation 0.0003083945019886698 -0.9999998846156438 0.0003683225899884076 -1.5537701011081908
   children [
     HingeJoint {
       jointParameters HingeJointParameters {
-        position 354.496369961493
+        position 354.4563699677831
         axis 0 1 0
         anchor 0 0.05 0
       }
@@ -32,11 +32,12 @@ Robot {
         }
       ]
       endPoint Solid {
-        translation 7.053721964187053e-06 0.04954965226473412 -1.9187373200578596e-05
-        rotation 9.535101401000426e-08 0.9999999999999918 8.563434570433654e-08 3.2929159469594014
+        translation 7.815369899234475e-06 0.04954965226473412 -1.8889951752836093e-05
+        rotation 9.349632776808307e-08 0.9999999999999918 8.740907906446874e-08 3.2529159532495027
         children [
           HingeJoint {
             jointParameters HingeJointParameters {
+              position 0.19251929628230244
               axis 0 0 1
               anchor 0 0.07 0
               minStop -1.4
@@ -50,8 +51,8 @@ Robot {
               }
             ]
             endPoint Solid {
-              translation 0.0032064503959314938 0.04989344820219088 -8.344650248570637e-10
-              rotation 9.283789887570627e-11 2.3429280561118034e-11 -1 0.17757797244168033
+              translation 0.0069942441243863885 0.05087840753315674 -8.344650248570637e-10
+              rotation 1.0701123485941518e-09 3.82715763757503e-10 0.9999999999999999 0.014941323840594743
               scale 1.5 1.5 1.5
               children [
                 Transform {
@@ -69,7 +70,7 @@ Robot {
                     }
                   ]
                 }
-                Solid {
+                DEF FIRST_ARM Solid {
                   translation -0.0404203 -0.0605901 -0.0913961
                   children [
                     DEF SHAPE Shape {
@@ -97,28 +98,28 @@ Robot {
                     }
                   ]
                   name "Second_Part_1_Arm_Mesh.001"
-                  boundingObject USE SHAPE
+                  boundingObject USE ARM2_SHAPE
                   translationStep 0
                   rotationStep 0
                 }
                 HingeJoint {
                   jointParameters HingeJointParameters {
-                    position 4.80761383117651
+                    position 1.05
                     axis 0 0 1
                     anchor -0.005 0.27 0
-                    minStop -3.1
-                    maxStop -0.4
+                    minStop -4
+                    maxStop 0.5
                   }
                   device [
                     RotationalMotor {
                       name "joint2"
-                      minPosition -3.1
-                      maxPosition 4.80761383117651
+                      minPosition -4
+                      maxPosition 1.0300000000000007
                     }
                   ]
-                  endPoint Solid {
-                    translation -0.27330137048211706 0.23935078145502267 0
-                    rotation 0 0 1 4.80761383117651
+                  endPoint DEF SECOND_ARM Solid {
+                    translation 0.23169212614984322 0.13999293319720385 0
+                    rotation 0 0 1 1.0500000000000003
                     children [
                       Transform {
                         translation -0.0336007 0.252929 -0.000156713
@@ -164,11 +165,10 @@ Robot {
                           }
                         ]
                         name "First_part_1_Arm_Mesh"
-                        boundingObject USE SHAPE
                       }
                       HingeJoint {
                         jointParameters HingeJointParameters {
-                          position -2.094240622975871
+                          position -2.06424062297587
                           axis 0 0 1
                           anchor -0.05 0.23 0
                         }
@@ -179,12 +179,27 @@ Robot {
                             maxPosition 0.33004000000000006
                           }
                         ]
-                        endPoint Solid {
-                          translation -0.2691714712707135 0.03169187017575975 0
-                          rotation 0 0 1 5.236025520621064
+                        endPoint DEF THIRD_ARM Solid {
+                          translation -0.26312449995715714 0.02520694423059988 0
+                          rotation 0 0 1 5.266025520621065
                           scale 0.11 0.11 0.11
                           children [
                             Transform {
+                              translation -1.38733 1.72477 -0.0515395
+                              rotation 0.9238794411432811 -0.36964417650143255 -0.09904524729312443 3.14159
+                              children [
+                                DEF THIRD_ARM_CYLINDER Shape {
+                                  geometry Cylinder {
+                                    bottom FALSE
+                                    radius 0.2
+                                    side FALSE
+                                    top FALSE
+                                  }
+                                  castShadows FALSE
+                                }
+                              ]
+                            }
+                            DEF FINGER_TRANSFORM Transform {
                               translation -2.31 0.93 0
                               rotation 0 0 1 0.785397
                               children [
@@ -273,16 +288,12 @@ Robot {
                             }
                           ]
                           name "Second_Arm.obj"
-                          boundingObject USE SECOND_ARM_CYLINDER
-                          physics Physics {
-                          }
+                          boundingObject USE THIRD_ARM_CYLINDER
                         }
                       }
                     ]
                     name "Arm1.obj"
                     boundingObject USE SECOND_ARM_CYLINDER
-                    physics Physics {
-                    }
                   }
                 }
               ]
@@ -1235,13 +1246,24 @@ Robot {
   }
   controller "eod_controller"
   cpuConsumption 0
-  linearVelocity 2.5841677035350333e-13 -6.417734372365985e-13 4.5661140508581604e-12
-  angularVelocity 4.350933059515632e-11 -2.6548294167295238e-15 -2.462772715920418e-12
 }
 TexturedBackgroundLight {
 }
 RectangleArena {
   floorSize 20 20
+}
+DEF TEST Solid {
+  translation 0.19 0.61 2.06
+  children [
+    Shape {
+      geometry DEF TEST_BOX Box {
+        size 0.1 0.1 0.1
+      }
+    }
+  ]
+  boundingObject USE TEST_BOX
+  physics Physics {
+  }
 }
 WoodenBox {
   translation 0 -0.03 -2.21
