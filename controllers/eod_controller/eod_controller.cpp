@@ -24,6 +24,8 @@
 // All the webots classes are defined in the "webots" namespace
 using namespace webots;
 double gear_velocities[8] = {-1,-0.5,0,0.3,0.5,0.7,1,1.2};
+const double PI = 3.141592;
+enum Side {RIGHT,LEFT,NONE};
 // GRIPPER CLASS
 class Gripper{
   public:
@@ -70,8 +72,6 @@ class Gripper{
 //ENGINE CLASS
 class Engine{
   public:
-  enum Side {RIGHT,LEFT,NONE};
-  
     Engine(Motor **tracks){ // right track first
       this->tracks = tracks;
       this->gear = 0;
@@ -84,20 +84,6 @@ class Engine{
     
     void rotate(Side side){
       this->rotation = side;
-      int multiplicator = 0;
-      double left_track = tracks[1]->getPositionSensor()->getValue();
-      double right_track = tracks[0]->getPositionSensor()->getValue();
-      if(gear < 0){
-        rotation = NONE;
-  
-        return;
-      }
-      else if(rotation == RIGHT)
-        multiplicator = 1;
-      else
-        multiplicator = -1;
-      tracks[1]->setPosition(left_track-0.05*gear*multiplicator);
-      tracks[0]->setPosition(right_track+0.05*gear*multiplicator);
     }
     void change_gear(bool up){
       if(up && this->gear < 5) 
@@ -105,7 +91,9 @@ class Engine{
       else if(!up && this->gear > -2) 
         gear--;
     }
-    void turn(Side side){}
+    void turn(Side side){
+      turn_side = side;
+    }
     int get_gear(){}
     void set_gear(){}
     
@@ -118,15 +106,26 @@ class Engine{
     }
     
     void run(){
-      if(tracks[0]->getPositionSensor()->getValue()+0.01 >= tracks[0]->getTargetPosition() && rotation == RIGHT)
-        rotation = NONE;
-      if (rotation == NONE || gear < 0){
-        tracks[1]->setPosition(INFINITY);
-        tracks[0]->setPosition(INFINITY);
+      if(rotation == RIGHT){
+        tracks[0]->setVelocity(gear_velocities[gear+2]);
+        tracks[1]->setVelocity((-1)*gear_velocities[gear+2]);
       }
-      
-      tracks[0]->setVelocity(gear_velocities[gear+2]);
-      tracks[1]->setVelocity(gear_velocities[gear+2]);
+      else if(rotation == LEFT){
+        tracks[0]->setVelocity((-1)*gear_velocities[gear+2]);
+        tracks[1]->setVelocity(gear_velocities[gear+2]);
+      }
+      else if(turn_side == RIGHT){
+        tracks[0]->setVelocity(gear_velocities[gear+2]);
+        tracks[1]->setVelocity(gear_velocities[gear+2]/2);
+      }
+      else if(turn_side == LEFT){
+        tracks[0]->setVelocity(gear_velocities[gear+2]/2);
+        tracks[1]->setVelocity(gear_velocities[gear+2]);
+      }
+      else{
+        tracks[0]->setVelocity(gear_velocities[gear+2]);
+        tracks[1]->setVelocity(gear_velocities[gear+2]);
+      }
       
     }
   private:
@@ -142,23 +141,71 @@ class Arm{
       this->joints = joints;
     }
     void reset(){
-    
+      for(int i = 0; i < 4; i++){
+        if(i==0)
+          joints[i]->setPosition(recalculate_base_position());
+        else
+          joints[i]->setPosition(reset_positions[i]);
+        joints[i]->setVelocity(1);
+        std::cout << joints[i]->getPositionSensor()->getValue() << std::endl;
+      }
     }
     void set_endeffector_position(){
     
     }
-    void rotate(){
-      
+    void rotate(Side side){
+      joints[0]->setPosition(INFINITY);
+      if(side==RIGHT)
+        joints[0]->setVelocity(-1.0);
+      else if(side == LEFT)
+        joints[0]->setVelocity(1.0);
+      else
+        joints[0]->setVelocity(0.0);
+    }
+    
+    void stop(){
+      for(int i = 0; i < 4; i++){
+        joints[i]->setVelocity(0.0);
+      }
     }
     
     void move_y_axis(){
+      
     
     }
     void move_x_axis(){
     
     }
+    
+    double recalculate_base_position(){
+      int i = 0;
+      double factor = 0;
+      double base_value = joints[0]->getPositionSensor()->getValue();
+      if (base_value >= 0){
+        while(true){
+          factor = i*PI;
+          if (factor - base_value < 0)
+            break;
+          i++;
+        }
+        return 2*PI*i-base_value;
+      }
+      else{
+        while(true){
+          factor = i*PI;
+          if (factor + base_value > 0)
+            break;
+          i--;
+        }
+        return 2*PI*i*(-1)+base_value;
+      }
+    }
+    
   private:
-    Motor **joints;
+    Motor **joints;;
+    const double reset_positions[4] = {0.0, -0.5, 0.0, -0.75};
+    const double max_positions[4] = {INFINITY, 1.72, 0.5, 0.33};
+    const double min_positions[4] = {0.0, -1.4, -4, -2.73};
 
 };
 
@@ -204,32 +251,15 @@ int main(int argc, char **argv) {
   std::string fingers_names[2] = {"right_finger","left_finger"};
   std::string wheels_names[2] = {"right","left"}; // "left/0"
   std::string joints_names[4] = {"base","joint1","joint2","joint3"};
-  double velocity_left = 0.0;
-  double velocity_right = 0.0;
-  double velocity_arm1 = 0.0;
-  double velocity_joint1 =0.0;
-  double velocity_joint2 =0.0;
-  double velocity_joint3 =0.0;
-  unsigned int turn = 0;
-  unsigned int arm1_turn = 0;
-  unsigned int joint1_turn = 0;
-  unsigned int joint2_turn = 0;
-  unsigned int joint3_turn = 0;
-  double turn_time_start = 0;
-  double allowed_turn_time = 0.010;
-  double arm1_time_start = 0;
-  double joint1_time_start = 0;
-  double joint2_time_start = 0;
-  double joint3_time_start = 0;
-  int gear = 0;
     
 
   init_device(robot,wheels,true,2,wheels_names);
   init_device(robot,fingers,true,2,fingers_names);
-  init_device(robot,joints,false,4,joints_names);
+  init_device(robot,joints,true,4,joints_names);
   
   Gripper grip(fingers);
   Engine engine(wheels);
+  Arm arm(joints);
   std::cout << "XD";
     
   // get the time step of the current world.
@@ -244,86 +274,51 @@ int main(int argc, char **argv) {
   // Main loop:
   // - perform simulation steps until Webots is stopping the controller
   while (robot->step(timeStep) != -1) {
-    if(robot->getTime() >= turn_time_start + allowed_turn_time && turn != 0)
-      turn = 0;
     
-    if(robot->getTime() >= arm1_time_start + allowed_turn_time && arm1_turn != 0)
-      arm1_turn = 0;  
-    
-    if(robot->getTime() >= joint1_time_start + allowed_turn_time && joint1_turn != 0)
-      joint1_turn = 0;
-      
-     if(robot->getTime() >= joint2_time_start + allowed_turn_time && joint2_turn != 0)
-      joint2_turn = 0;
-      
-     if(robot->getTime() >= joint3_time_start + allowed_turn_time && joint3_turn != 0)
-      joint3_turn = 0;
-     
-          
     int key = kb.getKey();
-    if(key == kb.UP){
-      gear++;
-      if(gear > MAX_GEAR)
-        gear = MAX_GEAR;
-      std::cout << "XD" << std::endl;
+    if(key == kb.UP)
       engine.change_gear(true);
-    }
-    else if(key == kb.RIGHT){
-      engine.rotate(engine.RIGHT);
-      turn_time_start = robot->getTime();
-    }
-    else if(key == kb.LEFT){
-      engine.rotate(engine.LEFT);
-      turn_time_start = robot->getTime();
-    }
-    else if(key == kb.DOWN){
-       gear--;
-       if(gear < MIN_GEAR)
-          gear = MIN_GEAR;
+    else if(key == kb.DOWN)
        engine.change_gear(false);
-    }
-    else if(key == 'P'){ // press s to stop
+      
+    if(key == kb.RIGHT)
+      engine.turn(RIGHT);
+    else if(key == kb.LEFT)
+      engine.turn(LEFT);
+    else
+      engine.turn(NONE);
+    
+    
+    if(key == 'P')// press s to stop
       engine.stop();
-    }
     
-    else if(key == 'E'){
-      arm1_turn = 2;
-      arm1_time_start = robot->getTime();
-    }
+    if(key == 'E')
+      arm.rotate(RIGHT);
+    else if(key == 'Q')
+      arm.rotate(LEFT);
+    else
+      arm.rotate(NONE);
+      
+    if(key == 'R')
+      arm.reset();
     
-    else if(key == 'Q'){
-      arm1_turn = 1;
-      arm1_time_start = robot->getTime();
-    }
-    
-     else if(key == 'S'){
-      joint1_turn = 2;
-      joint1_time_start = robot->getTime();
+     if(key == 'S'){
     }
     
     else if(key == 'W'){
-      joint1_turn = 1;
-      joint1_time_start = robot->getTime();
+
       }
       
-        else if(key == '1'){
-      joint2_turn = 2;
-      joint2_time_start = robot->getTime();
+    else if(key == '1'){
     }
     
     else if(key == '2'){
-      joint2_turn = 1;
-      joint2_time_start = robot->getTime();
       }
-         else if(key == '3'){
-      joint3_turn = 2;
-      joint3_time_start = robot->getTime();
+    else if(key == '3'){
     }
     
     else if(key == '4'){
-      joint3_turn = 1;
-      joint3_time_start = robot->getTime();
-      }
+    }
     else if(key == 'G'){
        grip.close();
      }

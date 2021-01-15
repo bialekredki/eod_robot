@@ -8,8 +8,8 @@ WorldInfo {
   coordinateSystem "NUE"
 }
 Viewpoint {
-  orientation -0.8087065825885097 -0.3227575603694648 -0.49175321097311125 1.520021170308105
-  position 0.48143990760893873 4.987547801738396 3.1374029006022024
+  orientation 0.09834223159704295 -0.9765181367938626 -0.19167976939979098 2.8485296775713635
+  position -0.20562839520254303 1.1622278085995774 0.06853708390927116
   follow "eod_robot:solid"
   followType "Mounted Shot"
 }
@@ -17,33 +17,39 @@ DirectionalLight {
   direction 0 0 0
 }
 Robot {
-  translation 0.17142879152889107 0.10567277496510015 2.1409834756652213
-  rotation 0.0003083945019886698 -0.9999998846156438 0.0003683225899884076 -1.5537701011081908
+  translation 0.17142812003641397 0.10567285234558256 2.140983488520366
+  rotation 0.0003116509403232468 -0.9999998836063666 0.0003683217949472209 -1.5537702867365268
   children [
     HingeJoint {
       jointParameters HingeJointParameters {
-        position 354.4563699677831
+        position -1.6199865004563692
         axis 0 1 0
         anchor 0 0.05 0
       }
       device [
+        PositionSensor {
+          name "base_sensor"
+        }
         RotationalMotor {
-          name "arm1"
+          name "base"
         }
       ]
       endPoint Solid {
-        translation 7.815369899234475e-06 0.04954965226473412 -1.8889951752836093e-05
-        rotation 9.349632776808307e-08 0.9999999999999918 8.740907906446874e-08 3.2529159532495027
+        translation -2.0336348263518575e-05 0.04954965226473412 2.084040112670688e-06
+        rotation -2.646139024224372e-07 -0.999999999999962 7.633186071274595e-08 0.9650633129331293
         children [
           HingeJoint {
             jointParameters HingeJointParameters {
-              position 0.19251929628230244
+              position -0.4999999431351475
               axis 0 0 1
               anchor 0 0.07 0
               minStop -1.4
               maxStop 1.72
             }
             device [
+              PositionSensor {
+                name "joint1_sensor"
+              }
               RotationalMotor {
                 name "joint1"
                 minPosition -2.519521428710027
@@ -51,8 +57,8 @@ Robot {
               }
             ]
             endPoint Solid {
-              translation 0.0069942441243863885 0.05087840753315674 -8.344650248570637e-10
-              rotation 1.0701123485941518e-09 3.82715763757503e-10 0.9999999999999999 0.014941323840594743
+              translation -0.006825668381296862 0.05081758616627946 -8.344650248570623e-10
+              rotation 2.5546418767184565e-11 -7.138185360108452e-14 -1 0.6775779155768754
               scale 1.5 1.5 1.5
               children [
                 Transform {
@@ -104,13 +110,15 @@ Robot {
                 }
                 HingeJoint {
                   jointParameters HingeJointParameters {
-                    position 1.05
                     axis 0 0 1
                     anchor -0.005 0.27 0
                     minStop -4
                     maxStop 0.5
                   }
                   device [
+                    PositionSensor {
+                      name "joint2_sensor"
+                    }
                     RotationalMotor {
                       name "joint2"
                       minPosition -4
@@ -118,8 +126,8 @@ Robot {
                     }
                   ]
                   endPoint DEF SECOND_ARM Solid {
-                    translation 0.23169212614984322 0.13999293319720385 0
-                    rotation 0 0 1 1.0500000000000003
+                    translation 7.806255641895632e-18 0 0
+                    rotation 0 0 1 0
                     children [
                       Transform {
                         translation -0.0336007 0.252929 -0.000156713
@@ -168,7 +176,7 @@ Robot {
                       }
                       HingeJoint {
                         jointParameters HingeJointParameters {
-                          position -2.06424062297587
+                          position -0.75
                           axis 0 0 1
                           anchor -0.05 0.23 0
                         }
@@ -178,10 +186,13 @@ Robot {
                             minPosition -2.73
                             maxPosition 0.33004000000000006
                           }
+                          PositionSensor {
+                            name "joint3_sensor"
+                          }
                         ]
                         endPoint DEF THIRD_ARM Solid {
-                          translation -0.26312449995715714 0.02520694423059988 0
-                          rotation 0 0 1 5.266025520621065
+                          translation 0.09400967030517561 -0.028115212709269616 0
+                          rotation 0 0 -1 5.986104470762238
                           scale 0.11 0.11 0.11
                           children [
                             Transform {
@@ -301,6 +312,8 @@ Robot {
               boundingObject USE ARM2_SHAPE
               physics Physics {
               }
+              linearVelocity -1.021599288539797e-12 -2.7601459846179488e-14 -1.768292495661584e-12
+              angularVelocity 2.088651483796162e-12 -2.982880037806678e-10 3.47399414172444e-12
             }
           }
           Solid {
@@ -355,6 +368,8 @@ Robot {
         }
         physics Physics {
         }
+        linearVelocity -1.296241444272636e-14 2.4876954837509344e-16 3.5422960978001185e-15
+        angularVelocity -5.563864180960358e-14 -2.9828974825246296e-10 2.598311600861196e-13
       }
     }
     DEF LEFT_TRACK Track {
@@ -1246,6 +1261,8 @@ Robot {
   }
   controller "eod_controller"
   cpuConsumption 0
+  linearVelocity -5.7674725773406585e-15 -5.013959170672081e-16 -3.940789822536202e-15
+  angularVelocity -3.7534674103331675e-14 2.422691573768795e-17 5.49660809595036e-14
 }
 TexturedBackgroundLight {
 }
@@ -1253,7 +1270,8 @@ RectangleArena {
   floorSize 20 20
 }
 DEF TEST Solid {
-  translation 0.19 0.61 2.06
+  translation 0.4480402850363157 0.049877374999999995 1.2759184827320653
+  rotation 0.9999175223938026 0.009081530978842489 -0.009081530978842482 1.5708788078024658
   children [
     Shape {
       geometry DEF TEST_BOX Box {
@@ -1264,6 +1282,8 @@ DEF TEST Solid {
   boundingObject USE TEST_BOX
   physics Physics {
   }
+  linearVelocity -1.512105499645671e-17 1.59872115546024e-16 -5.376146878424579e-16
+  angularVelocity -1.0741407763248225e-14 4.9778214075133354e-17 8.326672684605272e-17
 }
 WoodenBox {
   translation 0 -0.03 -2.21
