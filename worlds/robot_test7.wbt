@@ -8,8 +8,8 @@ WorldInfo {
   coordinateSystem "NUE"
 }
 Viewpoint {
-  orientation 0.10798776154366596 -0.9883331023915133 -0.1074072719789257 2.7982000265859255
-  position -0.4491119408851021 0.9092160143959995 -7.696456091110804e-06
+  orientation -0.04982142305282022 -0.953873763990308 -0.29604504416719124 1.656156290864212
+  position -4.009951734270009 1.5656123398133082 1.9371315854568114
   follow "eod_robot:solid"
   followType "Mounted Shot"
 }
@@ -17,12 +17,12 @@ DirectionalLight {
   direction 0 0 0
 }
 Robot {
-  translation 0.17142879652011908 0.10567299106931258 2.140982553522416
-  rotation 0.00031294186291313506 -0.9999998803640621 0.00037595113010434756 -1.5537702905876762
+  translation 0.17142835053309485 0.10567280299948859 2.140983706330988
+  rotation 0.00030952726072293953 -0.9999998842367234 0.00036840116016164564 -1.5537702866354548
   children [
     HingeJoint {
       jointParameters HingeJointParameters {
-        position -1.6199864968279927
+        position 2.270013500735615
         axis 0 1 0
         anchor 0 0.05 0
       }
@@ -35,12 +35,12 @@ Robot {
         }
       ]
       endPoint Solid {
-        translation -2.0336348255957082e-05 0.04954965226473412 2.084040186458634e-06
-        rotation -2.646139032003868e-07 -0.9999999999999621 7.633186145716321e-08 0.9650633093047516
+        translation 1.348380606185939e-05 0.04954965226473412 -1.5365456647054327e-05
+        rotation 7.831021941244552e-08 0.9999999999999917 1.0194053592231745e-07 2.924936688258888
         children [
           HingeJoint {
             jointParameters HingeJointParameters {
-              position 0.24014795583713902
+              position 0.14012250811069848
               axis 0 0 1
               anchor 0 0.07 0
             }
@@ -53,8 +53,8 @@ Robot {
               }
             ]
             endPoint Solid {
-              translation 0.007896703964707583 0.051233092534108855 -8.344650248570525e-10
-              rotation 2.533265093925692e-10 9.746407600635364e-11 1 0.0625699833954861
+              translation 0.00598319359161764 0.05053834170003042 -8.344650248570525e-10
+              rotation 4.3075140987319793e-10 1.4144112001732696e-10 -1 0.037455464330948054
               scale 1.5 1.5 1.5
               children [
                 Transform {
@@ -106,7 +106,7 @@ Robot {
                 }
                 HingeJoint {
                   jointParameters HingeJointParameters {
-                    position -0.37900000000000034
+                    position -2.5009999999999923
                     axis 0 0 1
                     anchor -0.005 0.27 0
                   }
@@ -119,8 +119,8 @@ Robot {
                     }
                   ]
                   endPoint DEF SECOND_ARM Solid {
-                    translation -0.10025256179917118 0.017310567156648193 0
-                    rotation 0 0 -1 0.37900000000000084
+                    translation -0.17037979780928822 0.48348190198833874 0
+                    rotation 0 0 -1 2.5009999999999923
                     children [
                       Transform {
                         translation -0.0336007 0.252929 -0.000156713
@@ -169,7 +169,7 @@ Robot {
                       }
                       HingeJoint {
                         jointParameters HingeJointParameters {
-                          position -2.747999999999985
+                          position 0.6060000000000001
                           axis 0 0 1
                           anchor -0.05 0.23 0
                         }
@@ -182,8 +182,8 @@ Robot {
                           }
                         ]
                         endPoint DEF THIRD_ARM Solid {
-                          translation -0.344585010650212 0.20587698871261295 0
-                          rotation 0 0 1 4.582266143596937
+                          translation 0.23287911705758646 0.31568344826206074 0
+                          rotation 0 0 -1 4.630104470762252
                           scale 0.11 0.11 0.11
                           children [
                             Transform {
@@ -303,8 +303,8 @@ Robot {
               boundingObject USE ARM2_SHAPE
               physics Physics {
               }
-              linearVelocity -1.024809192085894e-08 -5.178197521461284e-09 6.843266654786387e-09
-              angularVelocity -3.6449075996166944e-07 6.549082930707139e-13 -5.459085920269837e-07
+              linearVelocity 2.2486553255657437e-09 -2.991584924718924e-09 -9.446600865699158e-09
+              angularVelocity 4.853780868198922e-07 -1.7537510329830828e-12 1.155526867607284e-07
             }
           }
           Solid {
@@ -359,8 +359,8 @@ Robot {
         }
         physics Physics {
         }
-        linearVelocity -8.226889174688235e-13 -1.1509932751495016e-13 1.1286461675451721e-12
-        angularVelocity 7.408694677134871e-12 3.484422011404646e-10 5.126215944071817e-12
+        linearVelocity 1.953595665823691e-13 1.872936779878858e-13 -1.5845827460375065e-12
+        angularVelocity -1.0086081881938166e-11 -4.8167127073004256e-11 -1.2185658705951208e-12
       }
     }
     DEF LEFT_TRACK Track {
@@ -1252,8 +1252,8 @@ Robot {
   }
   controller "eod_controller"
   cpuConsumption 0
-  linearVelocity -5.584703015985918e-13 -8.821910785651939e-14 7.719688692134389e-13
-  angularVelocity 7.356034369400435e-12 1.3744897905754662e-15 5.321799940060382e-12
+  linearVelocity 1.3030111251468962e-13 1.4207943925983649e-13 -1.0540167836632475e-12
+  angularVelocity -1.0043586485590204e-11 2.1478662943505413e-17 -1.2417261498629675e-12
 }
 TexturedBackgroundLight {
 }
@@ -1262,7 +1262,7 @@ RectangleArena {
 }
 DEF TEST Solid {
   translation 0.4480402850363157 0.049877374999999995 1.2759184827320653
-  rotation 0.9999175223938026 0.009081530978842508 -0.009081530978842501 1.5708788078024658
+  rotation 0.9999175223938026 0.009081530978842518 -0.009081530978842506 1.5708788078024658
   children [
     Shape {
       geometry DEF TEST_BOX Box {
@@ -1273,8 +1273,8 @@ DEF TEST Solid {
   boundingObject USE TEST_BOX
   physics Physics {
   }
-  linearVelocity -1.4434023898566973e-17 1.77635683940025e-16 -5.463127044557294e-16
-  angularVelocity -1.0907941216942157e-14 2.852302044434028e-17 1.6653345369377343e-16
+  linearVelocity -2.0722149083116598e-17 1.5987211554602254e-16 -5.39502787336418e-16
+  angularVelocity -1.057487430955461e-14 1.451767183182386e-17 2.4980018054066017e-16
 }
 WoodenBox {
   translation 0 -0.03 -2.21
