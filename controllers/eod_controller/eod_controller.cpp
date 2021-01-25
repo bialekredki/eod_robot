@@ -22,6 +22,7 @@
 #define MIN_VELOCITY -5
 #define MAX_GEAR 5
 #define MIN_GEAR -2
+#define EPS 0.04
 
 // All the webots classes are defined in the "webots" namespace
 using namespace webots;
@@ -41,7 +42,6 @@ private:
     	double sum = 0;
 		for(unsigned int i = 0; i < this->rows ; i++ ){
 			sum += row.at(i) * column.at(i);
-			std::cout << row.at(i) << "\t" << column.at(i) << std::endl;
 		}
 		return sum;
 	}
@@ -74,18 +74,29 @@ public:
     //END OF MATRIX::CONSTRUCTOR
 
     Matrix operator*(Matrix mat){
-		if(this->columns != mat.rows)
-			throw;
-		Matrix res(this->rows, mat.columns);
-		
-		for(unsigned int r = 0; r < res.rows ; r++){
-			for(unsigned int c = 0; c < res.columns ; c++){
-				res.get(r,c) = res.mac(values.at(r),mat.get_column(c));
-			}	
-		}
-		return res;
+      if(this->columns != mat.rows){
+	throw;
+      }
+      Matrix res(this->rows, mat.columns);
+      for(unsigned int r = 0; r < res.rows ; r++){
+        for(unsigned int c = 0; c < res.columns ; c++){
+	for(unsigned int k = 0; k < this->columns; k++)
+        	 res.get(r,c) += this->get(r,k)*mat.get(k,c);
+        }	
+      }
+    return res;
     }
 	//END MATRIX::OPERATOR*
+	
+    Matrix operator*(double k){
+      Matrix res(rows,columns);
+      for(unsigned int r = 0; r < rows ; r++){
+        for(unsigned int c = 0; c < columns ; c++)
+        	 res.get(r,c) = k*get(r,c);
+      }
+      return res;
+    }
+    //END MATRIX::OPERATOR*
 	
   std::vector<double> get_column(unsigned int column){
     std::vector<double> res;
@@ -99,7 +110,7 @@ public:
     Matrix operator!(){
         Matrix transpose(columns,rows);
         for(int r = 0 ; r < rows ; r++){
-            for(int c = 0 ; c < rows ; c++){
+            for(int c = 0 ; c < columns ; c++){
                 transpose.get(c,r) = values.at(r).at(c);
             }
         }
@@ -110,6 +121,28 @@ public:
 
     }
     //END MATRIX::OPERATOR^
+    
+    Matrix operator-(Matrix mat){
+      Matrix res(this->rows,this->columns);
+      for(unsigned int r = 0 ; r < rows ; r++ ){
+        for(unsigned int c = 0; c < columns ; c++){
+          res.get(r,c) = this->get(r,c)-mat.get(r,c);
+        }
+      }
+      return res;
+    }
+    //END MATRIX:OPERATOR-
+    
+    Matrix operator+(Matrix mat){
+      Matrix res(this->rows,this->columns);
+      for(unsigned int r = 0 ; r < rows ; r++ ){
+        for(unsigned int c = 0; c < columns ; c++){
+          res.get(r,c) = this->get(r,c)+mat.get(r,c);
+        }
+      }
+      return res;
+    }
+    //END MATRIX:OPERATOR+
 
     double& get(unsigned int row, unsigned int col){
         return (values.at(row).at(col));
@@ -123,6 +156,12 @@ public:
             }
             std::cout << std::endl;
         }
+        std::cout << std::endl;
+    }
+    
+    void print_values(std::string name){
+      std::cout << name << std::endl;
+      print_values();
     }
     
     void set(std::vector<double> vals){
@@ -134,6 +173,11 @@ public:
 			}
 		}
 	}
+    Matrix dimensions(){
+      Matrix dim(2,1);
+      dim.set({rows,columns});
+      return dim;
+    }
 
 };
 
@@ -283,21 +327,30 @@ class Arm{
     }
     
     void move_depth(int i){
-    return;
-      if(i==0)
+      if(i==0){
         return; 
-      double qn[3];
-      print_end_effector();
-      inverse_kinematics(true, qn);
-      for(int i = 0; i < 3; i++){
-        joints[i+1]->setPosition(qn[i]);
-        joints[i+1]->setVelocity(1);
+        }
+      //print_end_effector();
+      Matrix Q = inverse_kinematics(true);
+      set_position(Q);
+      //point(3).print_values("En=");
+      //diff.print_values("Diff Q=");
+      //Q.print_values("Q=");
+      //for(int i = 0; i < 3; i++){
+       
        // std::cout << "Target " << i << "\t" << joints[i+1]->getTargetPosition() << "\t" << qn[i] << std::endl;
        // std::cout << "Current " << i << "\t" << joints[i+1]->getPositionSensor()->getValue() <<std::endl;
         
+      //}
+      //print_end_effector();
       }
-      print_end_effector();
-      }
+     void set_position(Matrix q){
+       for(int i = 0; i < 3; i++){
+         joints[i+1]->setPosition(reverse_angle(q.get(i,0), i));
+         //std::cout << "T" << i << " =" << joints[i+1]->getTargetPosition() << "\tS" << i <<" =" <<joints[i+1]->getPositionSensor()->getValue() << std::endl;
+         joints[i+1]->setVelocity(1);
+       }
+     }
 
     void move_height(bool heigher){}
     
@@ -332,49 +385,174 @@ class Arm{
     }
     
     void forward_kinematics(){
-      double* q = get_angles();
-       end_effector[0] = sin(q[0])*ARMS[0] + ssin(q,0,1)*ARMS[1] + sin(q[2])*ARMS[2];
-       end_effector[1] = cos(q[0])*ARMS[0] - scos(q,0,1)*ARMS[1] + +cos(q[2])*ARMS[2];
-      delete[] q;
+       Matrix T = transform(1)*transform(2)*transform(3);
+       end_effector[0] = T.get(0,2);
+       end_effector[1] = T.get(1,2);
     }
     
-    void inverse_kinematics(bool is_depth,double* qn){
+    Matrix inverse_kinematics(bool is_depth){
       //STEP 1 FIND P2(ie the end of second arm and the begining of the last one)
-      double p2[2];
-      double yn,xn = 0;
-      double theta,d = 0;
-      double q1n,q2n,q3n = 0;
-      double* q = get_angles();
-      double gamma = q[0]+q[1]+q[2];
-      get_p(2,p2);
-      if(is_depth){
-        xn = end_effector[0] + 0.1;
-        yn = end_effector[1];
+      Matrix E(2,1);
+      Matrix J(3,2);
+      Matrix G(2,1);
+      Matrix V(2,1);
+      Matrix dq;
+      Matrix Q = get_configuration();
+      print_end_effector();
+      E.set({end_effector[0], end_effector[1]});
+      if(is_depth)
+        G.set({end_effector[0]+0.05, end_effector[1]});
+      else
+        G.set({end_effector[0], end_effector[1]+0.05});
+      
+      E.print_values("E=");
+      G.print_values("G=");
+      int counter = 0;
+      std::cout << "GEODIST=" << geometrical_distance_2D(E,G) << std::endl;
+      while(geometrical_distance_2D(E,G) > EPS){
+      std::cout << "Counter=" << counter << std::endl;
+        V = G-E;
+        //V.print_values("V=");
+        J = InvJacobian();
+        //J.print_values("J=");
+        //J.dimensions().print_values("dimJ=");
+        //V.dimensions().print_values("dimV=");
+        dq = J*V;
+        //dq.print_values("dQ=");
+        dq = dq*0.1;
+        Q = Q + dq;
+        E = end_point(Q);
+        //dq.print_values("dQ=");
+        Q.print_values("Q=");
+        counter++;
       }
-      else{
-        xn = end_effector[0];
-        yn = end_effector[1] + 0.1;
-      }
-      d = sqrt(xn*xn+yn*yn);
-      theta = atan2((-yn)/d,(-xn)/d);
-      q1n = theta + acos((-1)*(xn*xn+yn*yn*ARMS[0]*ARMS[0]-ARMS[1]*ARMS[1])/(d*2*ARMS[0]));
-      print_angle(theta,"Theta");
-      q2n = atan2((xn-ARMS[0]*cos(q1n))/ARMS[1] , (yn-ARMS[0]*sin(q1n))/ARMS[1] ) - q1n;
-      q3n = gamma - q1n - q2n;
-      qn[0] = q1n;
-      qn[1] = q2n;
-      qn[2] - q3n;
-      print_angle(q1n,"Q1N");
-      print_angle(q[0],"Q1");
-      print_angle(q2n,"Q2N");
-      print_angle(q[1],"Q2");
-      print_angle(q3n,"Q3N");
-      print_angle(q[2],"Q3");
+      return Q;
       //STEP 2 SOLVE FOR RR PLANAR
       //STEP 3 ???
       //STEP 4 PROFIT
-      delete[] q;
     
+    }
+    
+    double geometrical_distance_2D(Matrix p1, Matrix p2){
+      return sqrt(pow( (p1.get(0,0) - p2.get(0,0)), 2) + pow( (p1.get(1,0) - p2.get(1,0)), 2 ));
+    }
+    
+    Matrix forward_kinematics(Matrix Q){
+      std::cout<< "XD" << std::endl;
+    }
+    
+    Matrix get_configuration(){
+      double* q =get_angles();
+      Matrix config(3,1);
+      for(int i = 0; i < 3 ; i++){
+        config.get(i,0) = q[i];
+      }
+      delete[] q;
+      return config;
+    }
+    
+    Matrix InvJacobian(){
+      Matrix J(2,3);
+      Matrix j0(2,1);
+      Matrix j1(2,1);
+      Matrix j2(2,1);
+      Matrix r0 = rotation(1);
+      Matrix r1 = rotation(2);
+      Matrix r2 = rotation(3);
+      Matrix Rx(3,1);
+      // (1,2)x(2,1) = (1x1)
+      // (3x1)x(1x2) = (3x2)
+      Rx.set({-1,0,0});
+      Matrix pj0(2,1);
+      Matrix pj1 = point(1);
+      Matrix pj2 = point(2);
+      Matrix pe = point(3);
+      //(pe-pj2).print_values("DIFF=");
+      //r0.print_values("r0=");
+     // pj0.print_values("pj0=");
+      j0 = Rx*!(pe-pj0);
+      //j0.print_values("j0=");
+      j1 = Rx*!(pe-pj1);
+      //j1.print_values("j1=");
+      j2 = Rx*!(pe-pj2);
+      //j2.print_values("j2=");
+      J.set({j0.get(0,0), j1.get(0,0), j2.get(0,0),
+            j0.get(1,0), j1.get(1,0), j2.get(1,0)});
+      J.print_values("Jacobian=");
+      //(!J).print_values("JT=");
+      return !J;
+      
+    }
+    
+    Matrix point(int joint){
+      Matrix p(2,1);
+      Matrix A(3,3);
+      A.set({1,0,0,
+            0,1,0,
+            0,0,1});
+      
+        for(int i = 0 ; i < joint; i++){
+          A = A * transform(i);
+        }
+      p.set({A.get(0,2), A.get(1,2)});
+      p.print_values("P=");
+      return p;
+    }
+    
+    Matrix end_point(Matrix config){
+      Matrix  p(2,1);
+      Matrix  A = transform(1,config.get(1,0))*transform(2,config.get(1,0))*transform(3,config.get(2,0));
+      p.set( { A.get(0,2), A.get(1,2) } );
+      return p;;
+    }
+    
+    Matrix transform(int joint){
+      Matrix R;
+      Matrix T;
+      double* q = get_angles();
+      int k = 1;
+      if(joint==0){
+        k = -1;
+      }
+      R.set({ k*cos( q[joint] ), sin( q[joint] ), 0,
+              -k*sin( q[joint] ), k*cos( q[joint] ), 0,
+              0, 0, 1 });
+      T.set({1,0,ARMS[joint],
+            0,1,0,
+            0,0,1});
+            
+      delete[] q;
+      return R*T;
+    }
+    
+    Matrix transform(int joint,double q){
+      Matrix R;
+      Matrix T;
+      int k = 1;
+      if(joint==0){
+        k = -1;
+      }
+      R.set({ k*cos( q ), sin( q ), 0,
+              -k*sin( q ), k*cos( q ), 0,
+              0, 0, 1 });
+      T.set({1,0,ARMS[joint],
+            0,1,0,
+            0,0,1});
+      return R*T;
+    }
+
+    
+    Matrix rotation(int joint){
+      Matrix R(2,2);
+      double* q = get_angles();
+      int k = 1;
+      if(joint==0){
+        k = -1;
+      }
+      R.set({k*cos( q[joint] ), sin( q[joint] ),
+            -k*sin( q[joint] ), k*cos( q[joint] )});
+      delete[] q;
+      return R;
     }
     
     double rad_to_deg(double rad){
@@ -390,12 +568,16 @@ class Arm{
     double* q = get_angles();
     Matrix Rs[3];
     Matrix Ts[3];
+    print_angle(q[2],"Q2");
+    print_angle(q[1],"Q1");
     int  k = 1;
     for(int i = 0; i < 3; i++){
-      if(i==2)
+      if(i==0)
         k = -1;
-      Rs[i].set({ -k*cos( sangle(q,0,i ) ), sin( sangle(q,0,i) ), 0,
-              sin( sangle(q,0,i) ), -k*cos( sangle(q,0,i) ), 0,
+      else
+        k = 1;
+      Rs[i].set({ k*cos( q[i] ), sin( q[i] ), 0,
+              -k*sin( q[i] ), k*cos( q[i] ), 0,
               0, 0, 1 });
       Ts[i].set({1,0,ARMS[i],
             0,1,0,
@@ -475,15 +657,25 @@ class Arm{
         q[i] += PI/2-0.26;
         if(i==1){
           q[i] *= (-1);
-          q[i] += 0.854;
+          q[i] += 0.854-3.13;
              }
           if(i==2){
-          //q[i] *= (-1);
-          q[i] += PI*3/4;
+          q[i] += PI*3/4-1.3;
+          q[i] *= (-1);
           } 
        }
        return q;
       }
+      
+      
+    double reverse_angle(double q, int joint){
+      if(joint == 0)
+        return q-PI/2+0.26;
+      else if(joint == 1)
+        return (q-0.854+3.13)*(-1);
+      else if(joint == 2)
+        return (-1)*q-PI*3/4+1.3;
+    }
       
      void get_p(unsigned int n, double* result){
        double* q = get_angles();
@@ -600,7 +792,6 @@ int main(int argc, char **argv) {
     
     if(key == 'W'){
       arm.move_depth(1);
-      std::cout << joints[1]->getTargetPosition() << std::endl;
       }
     else if(key == 'S'){
       arm.move_depth(2);
@@ -619,7 +810,7 @@ int main(int argc, char **argv) {
     else
       arm.rotate(NONE);
       
-     if(key == '1')
+    /* if(key == '1')
        arm.rotate_joint(1,RIGHT);
      else if(key == '2')
        arm.rotate_joint(1,LEFT);
@@ -642,7 +833,7 @@ int main(int argc, char **argv) {
      else if(key == '6')
        arm.rotate_joint(3,LEFT);
      else
-       arm.rotate_joint(3,NONE);
+       arm.rotate_joint(3,NONE);*/
      
       
 
